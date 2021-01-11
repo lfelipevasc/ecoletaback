@@ -9,6 +9,7 @@ routes.get('/items', async (request, response) => {
 
     const serializedItems = items.map(item => {
         return {
+            id: item.id,
             title: item.title,
             image_url: `http://localhost:3333/uploads/${item.image}`,
         };
@@ -17,4 +18,24 @@ routes.get('/items', async (request, response) => {
     return response.json(serializedItems);
 });
 
+routes.post('/points', async (request, response) => {
+    const { name, email, whatsapp, latitude, longitude, city, uf, items } = request.body;
+    //se a segunda query falhar, a primeira não será executada
+    const trx = await knex.transaction();
+
+    const insertedIds = await trx('points').insert({ image: 'image-fake', name, email, whatsapp, latitude, longitude, city, uf });
+
+    const points_id = insertedIds[0];
+
+    const pointItems = items.map((item_id: number) => {
+        return {
+            item_id,
+            point_id: points_id,
+        };
+    })
+
+    await trx('point_items').insert(pointItems);
+
+    return response.json({ success: true});
+});
 export default routes;
