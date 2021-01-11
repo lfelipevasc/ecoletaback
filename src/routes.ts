@@ -1,7 +1,9 @@
 import express from 'express';
 import knex from './database/connection';
+import PointsController from './controllers/PointsController';
 
 const routes = express.Router();
+const pointsController = new PointsController();
 
 routes.get('/items', async (request, response) => {
     //busca no banco
@@ -18,24 +20,6 @@ routes.get('/items', async (request, response) => {
     return response.json(serializedItems);
 });
 
-routes.post('/points', async (request, response) => {
-    const { name, email, whatsapp, latitude, longitude, city, uf, items } = request.body;
-    //se a segunda query falhar, a primeira não será executada
-    const trx = await knex.transaction();
+routes.post('/points', pointsController.create);
 
-    const insertedIds = await trx('points').insert({ image: 'image-fake', name, email, whatsapp, latitude, longitude, city, uf });
-
-    const points_id = insertedIds[0];
-
-    const pointItems = items.map((item_id: number) => {
-        return {
-            item_id,
-            point_id: points_id,
-        };
-    })
-
-    await trx('point_items').insert(pointItems);
-
-    return response.json({ success: true});
-});
 export default routes;
